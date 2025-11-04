@@ -113,8 +113,8 @@ At equal NFE, **AdaSDE** consistently achieves the best FID and outperforms the 
 | ImageNet-64            | **6.90**              | AMED-Solver               | 10.74 | −3.84               | **−35.8%**    |
 | LSUN Bedroom (256×256) | **6.96**              | AMED-Solver               | 13.20 | −6.24               | **−47.3%**    |
 
-> Computation:
-> Relative improvement = \((\text{FID}_{\text{SOTA}} - \text{FID}_{\text{AdaSDE}}) / \text{FID}_{\text{SOTA}}\)  
+>**Computation:** $ \text{Relative improvement}~(\%) = \frac{\text{FID}_{\text{SOTA}} - \text{FID}_{\text{AdaSDE}}}{\text{FID}_{\text{SOTA}}} \times 100 $
+
 
 
 
