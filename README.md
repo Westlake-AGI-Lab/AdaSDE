@@ -103,14 +103,19 @@ python fid.py calc --images=path/to/images --ref=path/to/fid/stat
 <img src="assets/fid.png" alt="fid" width="800" >
 
 
-**Key Metric:** All results achieved at **5 NFE** (ultra-low latency)
+**Key Metric:** All numbers are measured at **5 NFE** (ultra-low latency).  
+At equal NFE, **AdaSDE** consistently achieves the best FID and outperforms the best non-AdaSDE method on every dataset.
 
-| Dataset       | FID   | Improvement |
-|---------------|-------|-------------|
-| `CIFAR-10`    | 4.33  | +34% over SOTA |
-| `FFHQ-64`     | 7.84  | +37% over SOTA | 
-| `ImageNet-64` | 6.35  | +41% over SOTA |
-| `LSUN Bedroom`| 7.52  | +43% over SOTA |
+| Dataset                 | AdaSDE @5 NFE (FID ↓) | Best non-AdaSDE (method) | FID ↓ | Absolute gain (ΔFID) | Relative gain |
+|-------------------------|-----------------------|---------------------------|-------|----------------------|---------------|
+| CIFAR-10 (32×32)       | **4.18**              | AMED-Solver               | 7.59  | −3.41               | **−44.9%**    |
+| FFHQ-64                | **8.05**              | AMED-Solver               | 14.80 | −6.75               | **−45.6%**    |
+| ImageNet-64            | **6.90**              | AMED-Solver               | 10.74 | −3.84               | **−35.8%**    |
+| LSUN Bedroom (256×256) | **6.96**              | AMED-Solver               | 13.20 | −6.24               | **−47.3%**    |
+
+> Computation:
+> Relative improvement = \((\text{FID}_{\text{SOTA}} - \text{FID}_{\text{AdaSDE}}) / \text{FID}_{\text{SOTA}}\)  
+
 
 
 ## Pre-trained AdaSDE Predictors
