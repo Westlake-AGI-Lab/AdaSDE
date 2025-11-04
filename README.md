@@ -1,4 +1,4 @@
-## [ICCV 2025] Adaptive Stochastic Coefficients for Accelerating Diffusion Sampling<br><sub>Official implementation of the NeurIPS 2025 paper</sub>
+## [NeurIPS 2025] Adaptive Stochastic Coefficients for Accelerating Diffusion Sampling<br><sub>Official implementation of the NeurIPS 2025 paper</sub>
 
 <div align="center">
 <img src="assets/flowers.png" alt="teaser" width="500">
@@ -50,7 +50,7 @@ train.py --dataset_name="cifar10" --batch=32 --total_kimg=10 $SOLVER_FLAGS $SCHE
 ```
 ```bash
 # Stable Diffusion
-SOLVER_FLAGS="--sampler_stu=epd --sampler_tea=dpm --num_steps=4 --M=3 --afs=True --scale_dir=0.05 --scale_time=0.2 --seed=0 --lr 0.01"
+SOLVER_FLAGS="--sampler_stu=adasde --sampler_tea=dpm --num_steps=4 --M=3 --afs=True --scale_dir=0.05 --scale_time=0.2 --seed=0 --lr 0.01"
 SCHEDULE_FLAGS="--schedule_type=discrete --schedule_rho=1"
 ADDITIONAL_FLAGS="--max_order=2 --predict_x0=False --lower_order_final=True"
 GUIDANCE_FLAGS="--guidance_type=cfg --guidance_rate=7.5"
@@ -77,7 +77,7 @@ python fid.py calc --images=path/to/images --ref=path/to/fid/stat
 | Category          | Parameter          | Default | Description |
 |-------------------|--------------------|---------|-------------|
 | **General Options** | `dataset_name`     | None    | Supported datasets: `['cifar10', 'ffhq', 'afhqv2', 'imagenet64', 'lsun_bedroom', 'imagenet256', 'lsun_bedroom_ldm', 'ms_coco']` |
-|                   | `predictor_path`   | None    | Path or experiment number of trained EPD predictor |
+|                   | `predictor_path`   | None    | Path or experiment number of trained AdaSDE predictor |
 |                   | `batch`            | 64      | Total batch size |
 |                   | `seeds`            | "0-63"  | Random seed range for image generation |
 |                   | `grid`             | False   | Organize output images in grid layout |
@@ -113,9 +113,9 @@ python fid.py calc --images=path/to/images --ref=path/to/fid/stat
 | `LSUN Bedroom`| 7.52  | +43% over SOTA |
 
 
-## Pre-trained EPD Predictors
+## Pre-trained AdaSDE Predictors
 
-We provide pre-trained EPD predictors for:
+We provide pre-trained AdaSDE predictors for:
 
 - CIFAR-10 main result
 - CIFAR-10 ablation result
