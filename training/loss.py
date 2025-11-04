@@ -3,29 +3,28 @@ from torch_utils import persistence
 from torch_utils import distributed as dist
 import solvers
 from solver_utils import get_schedule
-from piq import LPIPS
 from inception import compute_inception_mse_loss
 from inception import InceptionFeatureExtractor
 #----------------------------------------------------------------------------
 
 def get_solver_fn(solver_name):
-    if solver_name == 'epd':
-        solver_fn = solvers.epd_sampler
+    if solver_name == 'adasde':
+        solver_fn = solvers.adasde_sampler
     elif solver_name == 'ipndm':
         solver_fn = solvers.ipndm_sampler
     elif solver_name == 'dpm':
         solver_fn = solvers.dpm_sampler
     elif solver_name == 'heun':
         solver_fn = solvers.heun_sampler
-    elif solver_name == 'epd_parallel':
-        solver_fn = solvers.epd_parallel_sampler
+    elif solver_name == 'adasde_parallel':
+        solver_fn = solvers.adasde_parallel_sampler
     else:
         raise ValueError("Got wrong solver name {}".format(solver_name))
     return solver_fn
 
 # ---------------------------------------------------------------------------
 @persistence.persistent_class
-class EPD_loss:
+class adasde_loss:
     def __init__(
         self, num_steps=None, sampler_stu=None, sampler_tea=None, M=None, 
         schedule_type=None, schedule_rho=None, afs=False, max_order=None, 
@@ -61,13 +60,12 @@ class EPD_loss:
             self.buffer_t = []
 
         # Student steps.
-        student_out, buffer_model, buffer_t, r_s, scale_dir_s, scale_time_s, weight_s = self.solver_stu(
+        student_out, buffer_model, buffer_t, r_s, scale_dir_s, scale_time_s, weight_s, gamma_s = self.solver_stu(
             net, 
             tensor_in / t_cur, 
             class_labels=labels, 
             condition=condition, 
             unconditional_condition=unconditional_condition,
-            nums_steps =self.num_steps,
             num_steps=2,
             sigma_min=t_next, 
             sigma_max=t_cur, 
@@ -111,27 +109,36 @@ class EPD_loss:
  
         str2print = f"Step: {step_idx.item()} | Loss: {torch.mean(torch.norm(loss, p=2, dim=(1, 2, 3))).item():8.4f} "
        
+        p = getattr(predictor, 'module', predictor)
+
+        # weights
         for i in range(num_points):
-            weight = weight_s[:,i:i+1,:,:]
-            weight_mean = weight.mean().item()
-            str2print += f"| w{i}: {weight_mean:5.4f} "
+            weight = weight_s[:, i:i+1, :, :]
+            str2print += f"| w{i}: {weight.mean().item():5.4f} "
 
+        # r
         for i in range(num_points):
-            r = r_s[:,i:i+1,:,:]
-            r_mean = r.mean().item()
-            str2print += f"| r{i}: {r_mean:5.4f} "
+            r = r_s[:, i:i+1, :, :]
+            str2print += f"| r{i}: {r.mean().item():5.4f} "
 
-        if predictor.module.scale_time:
+        # scale_time
+        if bool(getattr(p, 'scale_time', 0)):
             for i in range(num_points):
-                st = scale_time_s[:,i:i+1,:,:]
-                st_mean = st.mean().item()
-                str2print += f"| st{i}: {st_mean:5.4f} "
+                st = scale_time_s[:, i:i+1, :, :]
+                str2print += f"| st{i}: {st.mean().item():5.4f} "
 
-        if predictor.module.scale_dir:
+        # scale_dir
+        if bool(getattr(p, 'scale_dir', 0)):
             for i in range(num_points):
-                sd = scale_dir_s[:,i:i+1,:,:]
-                sd_mean = sd.mean().item()
-                str2print += f"| sd{i}: {sd_mean:5.4f} "
+                sd = scale_dir_s[:, i:i+1, :, :]
+                str2print += f"| sd{i}: {sd.mean().item():5.4f} "
+
+        has_gamma = float(getattr(p, 'gamma', 0)) > 0.0
+        for i in range(num_points):
+            g = gamma_s[:, i:i+1, :, :] if 'gamma_s' in locals() else torch.zeros_like(r_s[:, i:i+1, :, :])
+            str2print += f"| gamma{i}: {g.mean().item():5.6f} "
+        if not has_gamma:
+            str2print += "| gamma_off "
 
         return loss, str2print, student_out
 

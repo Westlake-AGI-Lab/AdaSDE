@@ -174,10 +174,8 @@ def main(predictor_path, max_batch_size, seeds, grid, outdir, subdirs, device=to
     solver_kwargs = {key: value for key, value in solver_kwargs.items() if value is not None}
     solver_kwargs['predictor'] = predictor
 
-    if predictor.sampler_stu == 'epd':
-        solver_kwargs['solver'] = solver = 'epd_parallel'
-    else:
-        solver_kwargs['solver'] = solver = predictor.sampler_stu
+
+    solver_kwargs['solver'] = solver = predictor.sampler_stu
     solver_kwargs['num_steps'] = predictor.num_steps
     solver_kwargs['guidance_type'] = predictor.guidance_type
     solver_kwargs['guidance_rate'] = predictor.guidance_rate

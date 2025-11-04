@@ -21,16 +21,17 @@ warnings.filterwarnings('ignore', 'Grad strides do not match bucket view strides
 
 # Options for solvers
 @click.option('--num_steps',        help='Number of time steps for training', metavar='INT',           type=click.IntRange(min=1), default=4, show_default=True)
-@click.option('--sampler_stu',      help='Student solver', metavar='STR',                              type=click.Choice(['epd','amed', 'dpm', 'dpmpp', 'euler', 'ipndm']), default='epd', show_default=True)
-@click.option('--sampler_tea',      help='Teacher solver', metavar='STR',                              type=click.Choice(['heun', 'dpm', 'dpmpp', 'euler', 'ipndm']), default='heun', show_default=True)
-@click.option('--M',                help='Steps to insert between two adjacent steps', metavar='INT',  type=click.IntRange(min=1), default=1, show_default=True)
+@click.option('--sampler_stu',      help='Student solver', metavar='STR',                              type=click.Choice(['adasde']), default='adasde', show_default=True)
+@click.option('--sampler_tea',      help='Teacher solver', metavar='STR',                              type=click.Choice(['dpm']), default='dpm', show_default=True)
+@click.option('--M',                help='Steps to insert between two adjacent steps', metavar='INT',  type=click.IntRange(min=1), default=3, show_default=True)
 @click.option('--guidance_type',    help='Guidance type',                                              type=click.Choice(['cg', 'cfg', 'uncond', None]), default=None, show_default=True)
 @click.option('--guidance_rate',    help='Guidance rate', metavar='FLOAT',                             type=float, default=0.)
-@click.option('--schedule_type',    help='Time discretization schedule', metavar='STR',                type=click.Choice(['polynomial', 'logsnr', 'time_uniform', 'discrete']), default='polynomial', show_default=True)
+@click.option('--schedule_type',    help='Time discretization schedule', metavar='STR',                type=click.Choice(['polynomial', 'logsnr', 'time_uniform', 'discrete']), default='time_uniform', show_default=True)
 @click.option('--schedule_rho',     help='Time step exponent', metavar='FLOAT',                        type=click.FloatRange(min=0), default=7, show_default=True)
 @click.option('--afs',              help='Whether to use afs', metavar='BOOL',                         type=bool, default=True, show_default=True)
-@click.option('--scale_dir',        help='Scale the gradient by [1-scale_dir, 1+scale_dir]', metavar='FLOAT',     type=click.FloatRange(min=0), default=0.01, show_default=True)
-@click.option('--scale_time',       help='Scale the gradient by [1-scale_time, 1+scale_time]', metavar='FLOAT',   type=click.FloatRange(min=0), default=0, show_default=True)
+@click.option('--scale_dir',        help='Scale the gradient by [1-scale_dir, 1+scale_dir]', metavar='FLOAT',     type=click.FloatRange(min=0), default=0.05, show_default=True)
+@click.option('--scale_time',       help='Scale the time step by [1-scale_time, 1+scale_time]', metavar='FLOAT',   type=click.FloatRange(min=0), default=0.2, show_default=True)
+@click.option('--gamma',            help='Scale the noise injection by [0, gamma]', metavar='FLOAT',   type=click.FloatRange(min=0), default=0.001, show_default=True)
 
 # Additional options for multi-step solvers, 1<=max_order<=4 for iPNDM, 1<=max_order<=3 for DPM-Solver++
 @click.option('--max_order',        help='max order for solvers', metavar='INT',                       type=click.IntRange(min=1), default=3)
@@ -55,10 +56,10 @@ warnings.filterwarnings('ignore', 'Grad strides do not match bucket view strides
 @click.option('--seed',             help='Random seed  [default: random]', metavar='INT',              type=int)
 @click.option('-n', '--dry-run',    help='Print training options and exit',                            is_flag=True)
 # Our options
-@click.option('--num_points',       help='number of parallel intermediate points', metavar='INT',      type=click.IntRange(min=1), default=2, show_default=True)
+@click.option('--num_points',       help='number of parallel intermediate points', metavar='INT',      type=click.IntRange(min=1), default=1, show_default=True)
 @click.option('--coslr',            help='Cosine Annearling Schedule',                                 is_flag=True)
 @click.option('--fcn',              help='Fix Last CN to 1',                                           is_flag=True)
-@click.option('--alpha',            help='Weights for the non-last steps',                             metavar='FLOAT',     type=click.FloatRange(min=0), default=10, show_default=True)
+@click.option('--alpha',            help='Weights for the non-last steps',                             metavar='FLOAT',     type=click.FloatRange(min=0), default=20, show_default=True)
 
 def main(**kwargs):
     opts = dnnlib.EasyDict(kwargs)
@@ -72,15 +73,15 @@ def main(**kwargs):
     c.optimizer_kwargs = dnnlib.EasyDict(class_name='torch.optim.Adam', lr=opts.lr, betas=[0.9,0.999], eps=1e-8)
     c.cos_lr_schedule = opts.coslr
     c.alpha = opts.alpha
-    # EPD predictor architecture.
-    c.pred_kwargs.class_name = 'training.networks.EPD_predictor'
+    # adasde predictor architecture.
+    c.pred_kwargs.class_name = 'training.networks.adasde_predictor'
     c.pred_kwargs.update(num_steps=opts.num_steps, sampler_stu=opts.sampler_stu, sampler_tea=opts.sampler_tea, \
                         M=opts.m, guidance_type=opts.guidance_type, guidance_rate=opts.guidance_rate, \
                         schedule_rho=opts.schedule_rho, schedule_type=opts.schedule_type, afs=opts.afs, \
-                        dataset_name=opts.dataset_name, scale_dir=opts.scale_dir, scale_time=opts.scale_time, \
+                        dataset_name=opts.dataset_name, scale_dir=opts.scale_dir, scale_time=opts.scale_time, gamma=opts.gamma, \
                         num_points=opts.num_points, fcn=opts.fcn, alpha=opts.alpha, \
                         max_order=opts.max_order, predict_x0=opts.predict_x0, lower_order_final=opts.lower_order_final)
-    c.loss_kwargs.class_name = 'training.loss.EPD_loss'
+    c.loss_kwargs.class_name = 'training.loss.adasde_loss'
 
     # Training options.
     c.total_kimg = opts.total_kimg      # Train for total_kimg k trajectories

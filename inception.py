@@ -5,56 +5,72 @@ import pickle
 import dnnlib
 import tqdm
 
+
 class InceptionFeatureExtractor:
-    def __init__(self, device=torch.device('cuda')):
-        # 加载 Inception-v3 模型
+    """Inception-v3 feature extractor wrapper (StyleGAN3 metric variant).
+
+    This class loads the Inception network used by StyleGAN metrics and exposes
+    a simple `extract_features` method that returns 2048-D features for a batch
+    of images.
+
+    Attributes:
+        device: Torch device on which the model runs.
+        detector_url: URL to the pickled Inception network.
+        detector_kwargs: Extra kwargs passed into the network's forward call.
+        feature_dim: Dimensionality of the returned feature vectors.
+    """
+
+    def __init__(self, device: torch.device = torch.device("cuda")):
         self.device = device
-        self.detector_url = 'https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/versions/1/files/metrics/inception-2015-12-05.pkl'
+        self.detector_url = (
+            "https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/"
+            "versions/1/files/metrics/inception-2015-12-05.pkl"
+        )
         self.detector_kwargs = dict(return_features=True)
         self.feature_dim = 2048
-        
-        # 加载模型
+
+        # Load the Inception network from the pickle and move it to the target device.
         with dnnlib.util.open_url(self.detector_url) as f:
             self.detector_net = pickle.load(f).to(device)
         self.detector_net.eval()
 
-    def extract_features(self, images):
-        """
-        提取图像的 Inception 特征
-        
+    def extract_features(self, images: torch.Tensor) -> torch.Tensor:
+        """Compute Inception features for a batch of images.
+
         Args:
-            images: 形状为 [B, C, H, W] 的图像张量
-            
+            images: Tensor of shape [B, C, H, W]. If C == 1, the channel will be
+                triplicated to match the expected 3-channel input.
+
         Returns:
-            features: 形状为 [B, 2048] 的特征张量
+            Tensor of shape [B, 2048] containing per-image feature vectors.
         """
         if images.shape[1] == 1:
             images = images.repeat(1, 3, 1, 1)
-        
-        # 确保图像在正确的设备上
+
         images = images.to(self.device)
-        
-        # 提取特征
         features = self.detector_net(images, **self.detector_kwargs)
         return features
 
-def compute_inception_mse_loss(student_images, teacher_images, feature_extractor):
-    """
-    计算两组图像的 Inception 特征 MSE loss
-    
+
+def compute_inception_mse_loss(
+    student_images: torch.Tensor,
+    teacher_images: torch.Tensor,
+    feature_extractor: InceptionFeatureExtractor,
+) -> torch.Tensor:
+    """Compute MSE loss between Inception features of two image batches.
+
     Args:
-        student_images: 学生模型生成的图像，形状为 [B, C, H, W]
-        teacher_images: 教师模型生成的图像，形状为 [B, C, H, W]
-        feature_extractor: InceptionFeatureExtractor 实例
-        
+        student_images: Images produced by the student model, shape [B, C, H, W].
+        teacher_images: Images produced by the teacher model, shape [B, C, H, W].
+        feature_extractor: An initialized `InceptionFeatureExtractor`.
+
     Returns:
-        loss: MSE loss 标量值
+        Scalar tensor containing the mean squared error loss.
     """
-    # 提取特征
+    # Extract features
     student_features = feature_extractor.extract_features(student_images)
     teacher_features = feature_extractor.extract_features(teacher_images)
-    
-    # 计算 MSE loss
-    loss = F.mse_loss(student_features, teacher_features)
 
+    # Compute MSE loss on feature vectors
+    loss = F.mse_loss(student_features, teacher_features)
     return loss

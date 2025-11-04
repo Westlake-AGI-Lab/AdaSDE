@@ -32,16 +32,14 @@ def search_local_model(key, subsubdir="src", key_extra=None):
             target_dir = os.path.join('../', subdir, subsubdir)
         else:
             target_dir = os.path.join('../', subdir, subsubdir, key)
-
         if os.path.exists(target_dir):
             download_path = model_path = os.path.join(target_dir, url.split("/")[-1])
             if download_path.endswith(".zip"):        # for lsun_bedroom_ldm and ffhq_ldm
                 model_path = os.path.join(target_dir, 'model.ckpt')
-
             if os.path.exists(model_path):
                 exist_local_model = True
                 return exist_local_model, download_path, model_path 
-
+            
     download_path = os.path.join('./', subsubdir, key, url.split("/")[-1])
     return exist_local_model, download_path, None
 

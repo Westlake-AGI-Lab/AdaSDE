@@ -211,17 +211,16 @@ def training_loop(
                     lr_str = f"| lr : {lr:.8f} "
                     dist.print0(str2print + lr_str)
                     
-                    if pred_kwargs.sampler_stu == 'epd':
-                        if loss_fn.num_steps < 6 and dataset_name in ['cifar10', 'ffhq', 'afhqv2', 'imagenet64']:   
-                            if step_idx == loss_fn.num_steps - 2:
-                                loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True) 
+                    # if pred_kwargs.sampler_stu == 'adasde':
+                    #     if loss_fn.num_steps < 5 and dataset_name in ['cifar10']:   
+                    #         if step_idx == loss_fn.num_steps - 2:
+                    #             loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True) 
 
-                        else:
-                            loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True) 
-                    elif pred_kwargs.sampler_stu == 'ipndm':
-                        loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True) 
-                    else:
-                        raise ValueError("Got wrong settings: check student sampler!")
+                    #     else:
+                    #         loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True) 
+                    # else:
+                    #     raise ValueError("Got wrong settings: check student sampler!")
+                    loss.sum().mul(1 / (batch_gpu_total)).backward(retain_graph=True)
                     latents[round_idx] = stu_out
                     
             # Update weights.
