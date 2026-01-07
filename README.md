@@ -113,7 +113,6 @@ At equal NFE, **AdaSDE** consistently achieves the best FID and outperforms the 
 | ImageNet-64            | **6.90**              | AMED-Solver               | 10.74 | −3.84               | **−35.8%**    |
 | LSUN Bedroom (256×256) | **6.96**              | AMED-Solver               | 13.20 | −6.24               | **−47.3%**    |
 
->**Computation:** $ \text{Relative improvement}~(\%) = \frac{\text{FID}_{\text{SOTA}} - \text{FID}_{\text{AdaSDE}}}{\text{FID}_{\text{SOTA}}} \times 100 $
 
 
 
@@ -170,13 +169,12 @@ python fid.py ref --data=path/to/my-dataset.zip --dest=path/to/save/my-dataset.n
 If you find this repository useful, please consider citing the following paper:
 
 ```
-@misc{wang2025adaptivestochasticcoefficientsaccelerating,
+@inproceedings{wang2025adaptivestochasticcoefficientsaccelerating,
       title={Adaptive Stochastic Coefficients for Accelerating Diffusion Sampling}, 
       author={Ruoyu Wang and Beier Zhu and Junzhi Li and Liangyu Yuan and Chi Zhang},
       year={2025},
-      eprint={2510.23285},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2510.23285}, 
+      booktitle={Proc. NeurIPS}
+     
+}
 }
 ```
