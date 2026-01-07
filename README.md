@@ -174,7 +174,5 @@ If you find this repository useful, please consider citing the following paper:
       author={Ruoyu Wang and Beier Zhu and Junzhi Li and Liangyu Yuan and Chi Zhang},
       year={2025},
       booktitle={Proc. NeurIPS}
-     
-}
 }
 ```
